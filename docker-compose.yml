@@ -1,0 +1,73 @@
+# ZeroSync Quickstart
+#
+# Deploys the full ZeroSync stack using pre-built Docker images.
+# No source code required.
+#
+#   - zerosync  — Go signaling server
+#   - relay     — relay node (encrypted data stays in your network)
+#   - caddy     — reverse proxy with automatic TLS via Let's Encrypt
+#
+# Prerequisites:
+#   - Docker >= 24 and Docker Compose >= 2.20
+#   - A domain with DNS A record pointing to this server
+#   - Ports 80 and 443 open
+#   - A license key — contact contact.zerosync@proton.me (free tier available)
+#
+# Usage:
+#   1. cp .env.example .env
+#   2. Edit .env — set ZEROSYNC_DOMAIN, ZEROSYNC_LICENSE_KEY, ZEROSYNC_LICENSE_SECRET
+#   3. docker compose up -d
+#   4. curl https://your.domain.com/health
+
+services:
+
+  zerosync:
+    image: ghcr.io/tovsa7/zerosync-server:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      - GOMAXPROCS=${GOMAXPROCS:-2}
+      - ZEROSYNC_LICENSE_KEY=${ZEROSYNC_LICENSE_KEY}
+      - ZEROSYNC_LICENSE_SECRET=${ZEROSYNC_LICENSE_SECRET}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  relay:
+    image: ghcr.io/tovsa7/zerosync-relay:latest
+    restart: unless-stopped
+    environment:
+      - SIGNALING_URL=ws://zerosync:8080/ws
+      - ROOM_ID=${RELAY_ROOM_ID:-default}
+      - RELAY_REGION=${RELAY_REGION:-us-east}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      zerosync:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - ZEROSYNC_DOMAIN=${ZEROSYNC_DOMAIN}
+    restart: unless-stopped
+    depends_on:
+      zerosync:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

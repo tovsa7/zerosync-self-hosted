@@ -1,0 +1,17 @@
+# ZeroSync — Caddyfile
+# Set ZEROSYNC_DOMAIN in .env (e.g. sync.example.com).
+# Caddy obtains a TLS certificate from Let's Encrypt automatically.
+
+{$ZEROSYNC_DOMAIN} {
+    handle /ws {
+        reverse_proxy zerosync:8080
+    }
+    handle /health {
+        reverse_proxy zerosync:8080
+    }
+    handle /relay/health {
+        reverse_proxy relay:8081 {
+            rewrite /health
+        }
+    }
+}
