@@ -1,0 +1,18 @@
+# Build artifacts
+zerosync
+zerosync-server
+*.exe
+*.test
+*.out
+
+# Environment files
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Go
+vendor/

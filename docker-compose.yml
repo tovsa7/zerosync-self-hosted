@@ -11,11 +11,10 @@
 #   - Docker >= 24 and Docker Compose >= 2.20
 #   - A domain with DNS A record pointing to this server
 #   - Ports 80 and 443 open
-#   - A license key — contact contact.zerosync@proton.me (free tier available)
 #
 # Usage:
 #   1. cp .env.example .env
-#   2. Edit .env — set ZEROSYNC_DOMAIN, ZEROSYNC_LICENSE_KEY, ZEROSYNC_LICENSE_SECRET
+#   2. Edit .env — set ZEROSYNC_DOMAIN
 #   3. docker compose up -d
 #   4. curl https://your.domain.com/health
 
@@ -28,8 +27,6 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       - GOMAXPROCS=${GOMAXPROCS:-2}
-      - ZEROSYNC_LICENSE_KEY=${ZEROSYNC_LICENSE_KEY}
-      - ZEROSYNC_LICENSE_SECRET=${ZEROSYNC_LICENSE_SECRET}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 30s
