@@ -2,17 +2,17 @@
 
 End-to-end encrypted real-time collaboration server. Apache 2.0 licensed.
 
-ZeroSync clients negotiate WebRTC connections through this signaling server and
-relay encrypted blobs through optional relay nodes. The server never sees the
-room key — payloads are encrypted in the browser with AES-256-GCM, and the
-server only sees hashed peer/room IDs and ciphertext.
+ZeroSync clients negotiate WebRTC connections through this signaling server.
+When direct P2P is not possible, the server also broadcasts encrypted blobs
+between connected peers in the same room. The server never sees the room
+key — payloads are encrypted in the browser with AES-256-GCM, and the server
+only sees hashed peer/room IDs and ciphertext.
 
 ## What's included
 
 | Service | Image | Description |
 |---------|-------|-------------|
-| `zerosync` | `ghcr.io/tovsa7/zerosync-server` | Go signaling server |
-| `relay` | `ghcr.io/tovsa7/zerosync-relay` | Relay node — encrypted blobs only |
+| `zerosync` | `ghcr.io/tovsa7/zerosync-server` | Go signaling server (also relays encrypted blobs in-memory) |
 | `caddy` | `caddy:2-alpine` | Reverse proxy with automatic TLS (Let's Encrypt) |
 
 ## Prerequisites
@@ -56,8 +56,6 @@ docker run --rm -p 8080:8080 zerosync-server:local
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `ZEROSYNC_DOMAIN` | Yes | Your domain (e.g. `sync.example.com`) |
-| `RELAY_REGION` | No | Region tag shown to clients (default: `us-east`) |
-| `RELAY_ROOM_ID` | No | Room the relay joins on startup (default: `default`) |
 | `GOMAXPROCS` | No | OS threads for signaling server (default: `2`) |
 
 ## Architecture
@@ -68,15 +66,15 @@ Client SDK (browser)
   ▼
 Caddy (TLS termination)
   │
-  ├── /ws       → zerosync (signaling server)
-  ├── /health   → zerosync
-  └── /relay/health → relay
+  ├── /ws     → zerosync (signaling server)
+  └── /health → zerosync
 ```
 
 All user data is end-to-end encrypted with AES-256-GCM in the browser. The
-signaling server sees only hashed room/peer IDs and ciphertext — it cannot read
-your data. The relay node forwards encrypted blobs between peers when a direct
-P2P connection is not possible. It does not hold the room key and cannot
+signaling server sees only hashed room/peer IDs and ciphertext — it cannot
+read your data. When two peers cannot establish a direct WebRTC connection,
+the server forwards their encrypted blobs in-memory between currently
+connected peers in the same room. It does not hold the room key and cannot
 decrypt the data.
 
 ## Repository layout

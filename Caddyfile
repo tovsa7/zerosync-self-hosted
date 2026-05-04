@@ -9,9 +9,4 @@
     handle /health {
         reverse_proxy zerosync:8080
     }
-    handle /relay/health {
-        reverse_proxy relay:8081 {
-            rewrite /health
-        }
-    }
 }

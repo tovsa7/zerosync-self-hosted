@@ -3,8 +3,7 @@
 # Deploys the full ZeroSync stack using pre-built Docker images.
 # No source code required.
 #
-#   - zerosync  — Go signaling server
-#   - relay     — relay node (encrypted data stays in your network)
+#   - zerosync  — Go signaling server (also relays encrypted blobs in-memory)
 #   - caddy     — reverse proxy with automatic TLS via Let's Encrypt
 #
 # Prerequisites:
@@ -32,22 +31,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-
-  relay:
-    image: ghcr.io/tovsa7/zerosync-relay:latest
-    restart: unless-stopped
-    environment:
-      - SIGNALING_URL=ws://zerosync:8080/ws
-      - ROOM_ID=${RELAY_ROOM_ID:-default}
-      - RELAY_REGION=${RELAY_REGION:-us-east}
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8081/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    depends_on:
-      zerosync:
-        condition: service_healthy
 
   caddy:
     image: caddy:2-alpine
