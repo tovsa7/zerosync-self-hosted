@@ -6,7 +6,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o zerosync ./cmd/server
 
-FROM alpine:3.20
+FROM alpine:3.23
 
 # ca-certificates: required for TLS outbound connections.
 # wget: used by docker-compose healthcheck (GET /health).
