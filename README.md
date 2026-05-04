@@ -1,5 +1,7 @@
 # ZeroSync — Self-Hosted
 
+[![CI/CD](https://github.com/tovsa7/zerosync-self-hosted/actions/workflows/ci.yml/badge.svg)](https://github.com/tovsa7/zerosync-self-hosted/actions/workflows/ci.yml)
+
 End-to-end encrypted real-time collaboration server. Apache 2.0 licensed.
 
 ZeroSync clients negotiate WebRTC connections through this signaling server.
