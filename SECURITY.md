@@ -10,7 +10,9 @@ If you find a security issue in this server — signaling protocol, room registr
 
 Or email `contact.zerosync@proton.me` with the subject line `[security] zerosync-self-hosted: <short summary>`.
 
-You will receive an acknowledgement within **72 hours**. Confirmed issues are fixed privately, then released as a patch version with a public security advisory.
+Reports are reviewed on a best-effort basis, typically acknowledged within a few business days. Confirmed issues are fixed privately, then released as a patch version with a public security advisory.
+
+For active exploitation or imminent disclosure pressure, prefix the email subject with `[URGENT]`.
 
 ## In scope
 
