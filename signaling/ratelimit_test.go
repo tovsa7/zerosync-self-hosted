@@ -76,3 +76,53 @@ func TestConnLimiter_NegativeMax_Unlimited(t *testing.T) {
 		t.Fatal("negative max (unlimited) should always allow connections")
 	}
 }
+
+func TestConnLimiter_Available_TrueWhenUnderCap(t *testing.T) {
+	l := NewConnLimiter(2)
+	if !l.Available("1.2.3.4") {
+		t.Fatal("should be available when no slots taken")
+	}
+	l.Acquire("1.2.3.4")
+	if !l.Available("1.2.3.4") {
+		t.Fatal("should still be available with 1 of 2 slots taken")
+	}
+}
+
+func TestConnLimiter_Available_FalseWhenAtCap(t *testing.T) {
+	l := NewConnLimiter(2)
+	l.Acquire("1.2.3.4")
+	l.Acquire("1.2.3.4")
+	if l.Available("1.2.3.4") {
+		t.Fatal("should not be available when limit reached")
+	}
+}
+
+func TestConnLimiter_Available_DoesNotConsumeSlot(t *testing.T) {
+	l := NewConnLimiter(1)
+	l.Available("1.2.3.4")
+	l.Available("1.2.3.4")
+	if !l.Acquire("1.2.3.4") {
+		t.Fatal("Available should not consume a slot")
+	}
+}
+
+func TestConnLimiter_Available_IndependentPerIP(t *testing.T) {
+	l := NewConnLimiter(1)
+	l.Acquire("1.1.1.1")
+	if l.Available("1.1.1.1") {
+		t.Fatal("1.1.1.1 should not be available after Acquire")
+	}
+	if !l.Available("2.2.2.2") {
+		t.Fatal("2.2.2.2 should be available independently")
+	}
+}
+
+func TestConnLimiter_Available_UnlimitedMode(t *testing.T) {
+	l := NewConnLimiter(0)
+	for range 100 {
+		l.Acquire("1.2.3.4")
+	}
+	if !l.Available("1.2.3.4") {
+		t.Fatal("max=0 (unlimited) should always report available")
+	}
+}

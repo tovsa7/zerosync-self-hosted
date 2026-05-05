@@ -40,6 +40,19 @@ func (l *ConnLimiter) Acquire(ip string) bool {
 	return true
 }
 
+// Available reports whether a fresh slot could currently be acquired for
+// the given IP, without actually reserving it. Used by GET /health so a
+// prospective client can learn capacity status before opening a WebSocket.
+// Always returns true when max ≤ 0 (unlimited mode).
+func (l *ConnLimiter) Available(ip string) bool {
+	if l.max <= 0 {
+		return true
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.counts[ip] < l.max
+}
+
 // Release frees a previously acquired connection slot for the given IP.
 // No-op when max ≤ 0 (unlimited mode).
 func (l *ConnLimiter) Release(ip string) {

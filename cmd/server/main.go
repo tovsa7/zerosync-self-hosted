@@ -17,7 +17,7 @@ import (
 	"github.com/tovsa7/zerosync-self-hosted/signaling"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 func main() {
 	addr          := flag.String("addr", ":8080", "listen address")
@@ -31,7 +31,7 @@ func main() {
 	limiter := signaling.NewConnLimiter(*maxConnsPerIP)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", cors(handleHealth(rooms)))
+	mux.HandleFunc("GET /health", cors(handleHealth(rooms, limiter)))
 	mux.HandleFunc("GET /ws", handleWS(handler, limiter))
 
 	srv := &http.Server{
@@ -87,10 +87,25 @@ func handleWS(h *signaling.Handler, limiter *signaling.ConnLimiter) http.Handler
 	}
 }
 
-func handleHealth(rooms *room.Registry) http.HandlerFunc {
+func handleHealth(rooms *room.Registry, limiter *signaling.ConnLimiter) http.HandlerFunc {
 	start := time.Now()
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ip := signaling.RemoteIP(r)
 		w.Header().Set("Content-Type", "application/json")
+		// 429 when the calling IP is at the per-IP cap. Lets the SDK
+		// distinguish "Server at capacity" from "Server unreachable" after
+		// a failed WebSocket handshake (HTTP 429 is invisible to browser
+		// WebSocket close events).
+		if !limiter.Available(ip) {
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]any{
+				"status":  "at-capacity",
+				"version": version,
+				"rooms":   rooms.Len(),
+				"uptime":  fmt.Sprintf("%s", time.Since(start).Round(time.Second)),
+			})
+			return
+		}
 		json.NewEncoder(w).Encode(map[string]any{
 			"status":  "ok",
 			"version": version,
